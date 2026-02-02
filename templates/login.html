@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="login-section">
+    <div class="login-container">
+        <h2 class="section-title">เข้าสู่ระบบ</h2>
+        <!-- แสดง Flash Messages (ข้อความแจ้งเตือน) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- ฟอร์มเข้าสู่ระบบ ส่งข้อมูลไปยัง Route 'login' แบบ POST -->
+        <form action="{{ url_for('login') }}" method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username">ชื่อผู้ใช้ (Username)</label>
+                <input type="text" id="username" name="username" placeholder="กรอกชื่อผู้ใช้" required>
+            </div>
+            <div class="form-group">
+                <label for="password">รหัสผ่าน (Password)</label>
+                <input type="password" id="password" name="password" placeholder="กรอกรหัสผ่าน" required>
+            </div>
+            <button type="submit" class="btn-primary">เข้าสู่ระบบ</button>
+        </form>
+        <p class="login-footer">ยังไม่มีบัญชี? <a href="{{ url_for('register') }}">สมัครสมาชิก</a></p>
+    </div>
+</section>
+{% endblock %}

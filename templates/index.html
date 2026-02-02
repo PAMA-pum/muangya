@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero-section hero-home">
+  <h1 class="hero-slogan">
+    "นครราชสีมา <span style="color: bisque;">เมืองแห่งวีรกรรม</span><span class="text-black">และ</span><span
+      style="color: orange;">วัฒนธรรม</span>"
+  </h1>
+
+  <!-- <div class="search-container">
+    <h2 class="search-title"><span class="text-orange">คุณอยาก</span>ไปที่ไหน?</h2>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="ค้นหา...">
+    </div>
+  </div> -->
+</section>
+
+<section class="gallery-section">
+  <!-- Placeholder for Image Slider -->
+  <div class="image-slider">
+    <button class="slider-nav prev">&lt;</button>
+    <div class="slider-content">
+      <div class="slide-item active">
+        <img src="{{ url_for('static', filename='images/Untitled design (1).png') }}" alt="Landmark 2">
+      </div>
+      <div class="slide-item">
+        <img src="{{ url_for('static', filename='images/Untitled design (2).png') }}" alt="Landmark 3">
+      </div>
+      <div class="slide-item">
+        <img src="{{ url_for('static', filename='images/Untitled design (3).png') }}" alt="Landmark 4">
+      </div>
+      <div class="slide-item">
+        <img src="{{ url_for('static', filename='images/Untitled design (4).png') }}" alt="Landmark 5">
+      </div>
+      <div class="slide-item">
+        <img src="{{ url_for('static', filename='images/Untitled design.png') }}" alt="Landmark 6">
+      </div>
+    </div>
+    <button class="slider-nav next">&gt;</button>
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='slider.js') }}"></script>
+
+<!-- Example Content Sections imitating the design -->
+<section class="info-section container">
+  <div class="info-card">
+    <div class="info-text">
+      <h3>รู้จักเมืองย่า</h3>
+      <p>"นครราชสีมา... เมืองที่หล่อหลอมด้วยเลือดรักชาติของย่าโม ร้อยเรียงด้วยมนต์ขลังแห่งปราสาทหิน
+        และก้าวไปข้างหน้าในฐานะประตูที่เปิดต้อนรับทุกคนสู่ดินแดนอีสาน"</p>
+      <p></p>
+      <br>
+    </div>
+    <div class="info-image">
+      <img src="https://www.siamturakij.com/assets/files/images/Pimai%20Castle_Korat(1).jpg" alt="Yamo">
+    </div>
+  </div>
+</section>
+
+
+
+{% endblock %}

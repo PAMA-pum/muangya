@@ -1,0 +1,106 @@
+<!-- สืบทอด Layout หลักจาก base.html -->
+{% extends 'base.html' %}
+
+<!-- เริ่มต้น Block content ซึ่งจะไปแทนที่ block content ใน base.html -->
+{% block content %}
+<section class="activity-detail-section" style="padding: 4rem 2rem;">
+    <div class="container" style="max-width: 800px; margin: 0 auto;">
+        <div class="activity-detail-image"
+            style="margin-bottom: 2rem; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <img src="{{ activity.image }}" alt="{{ activity.title }}"
+                style="width: 100%; height: auto; display: block;">
+        </div>
+
+        <div class="activity-detail-content">
+            <h1 class="section-title" style="text-align: left; margin-bottom: 1rem;">{{ activity.title }}</h1>
+
+            <div class="activity-meta" style="margin-bottom: 2rem;">
+                <!-- แสดงวันที่ -->
+                <p
+                    style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #666; margin-bottom: 0.5rem;">
+                    <i class="icon-calendar" style="font-style: normal;">📅</i>
+                    {{ activity.date }}
+                </p>
+                <!-- แสดงสถานที่พร้อมลิงก์ Google Maps -->
+                <p style="font-size: 1.1rem; display: flex; align-items: start; gap: 0.5rem; color: #666;">
+                    <i class="icon-map-marker" style="font-style: normal;">📍</i>
+                    <a href="{{ activity.map_link }}" target="_blank"
+                        style="color: #666; text-decoration: underline;">{{ activity.location }}</a>
+                </p>
+            </div>
+
+            <div class="activity-description" style="font-size: 1.1rem; line-height: 1.8; color: #333;">
+                <p>{{ activity.description }}</p>
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <a href="{{ url_for('activities') }}" class="btn-primary"
+                    style="text-decoration: none; display: inline-block;">
+                    &larr; กลับหน้ารวมกิจกรรม
+                </a>
+            </div>
+
+            <!-- ส่วนแสดงความคิดเห็น -->
+            <div class="comments-section" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #eee;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 2rem;">ความคิดเห็น ({{ comments|length }})</h2>
+
+                <!-- แสดงข้อความแจ้งเตือน (Flash Messages) เช่น "บันทึกข้อมูลสำเร็จ" -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div style="margin-bottom: 2rem;">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- ฟอร์มแสดงความคิดเห็น (แสดงเฉพาะผู้ที่เข้าสู่ระบบแล้ว) -->
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('activity_detail', activity_id=activity.id) }}" method="POST"
+                    style="margin-bottom: 3rem;">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="content"
+                            style="display: block; margin-bottom: 0.5rem; font-weight: bold;">แสดงความคิดเห็นของคุณ</label>
+                        <textarea id="content" name="content" rows="4"
+                            style="width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;"
+                            required placeholder="เขียนความคิดเห็นที่นี่..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">ส่งความคิดเห็น</button>
+                </form>
+                {% else %}
+                <!-- หากยังไม่เข้าสู่ระบบ ให้แสดงลิงก์ไปหน้า Login -->
+                <div
+                    style="background: #f9f9f9; padding: 2rem; border-radius: 8px; text-align: center; margin-bottom: 3rem;">
+                    <p style="margin-bottom: 1rem; color: #666;">คุณต้องเข้าสู่ระบบก่อนแสดงความคิดเห็น</p>
+                    <a href="{{ url_for('login') }}" class="btn-primary" style="display: inline-block;">เข้าสู่ระบบ</a>
+                </div>
+                {% endif %}
+
+                <!-- รายการความคิดเห็น (Loop แสดงComment ทั้งหมด) -->
+                <div class="comments-list">
+                    {% for comment in comments %}
+                    <div class="comment-item"
+                        style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #f0f0f0;">
+                        <div class="comment-header"
+                            style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <!-- ชื่อผู้โพสต์ -->
+                            <strong style="font-size: 1.1rem; color: #333;">{{ comment.user.username }}</strong>
+                            <!-- วันที่โพสต์ -->
+                            <span style="color: #999; font-size: 0.9rem;">{{ comment.date_posted.strftime('%d/%m/%Y
+                                %H:%M') }}</span>
+                        </div>
+                        <div class="comment-body" style="color: #555; line-height: 1.6;">
+                            {{ comment.content }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- กรณีไม่มีความคิดเห็น -->
+                    <p style="color: #999; font-style: italic;">ยังไม่มีความคิดเห็น เป็นคนแรกที่แสดงความคิดเห็น!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

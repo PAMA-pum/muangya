@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero-section hero-activities">
+    <h1 class="hero-slogan">
+        "สนุกสนาน <span class="text-blue">สืบสาน</span><span class="text-black">ประเพณี</span><span
+            class="text-red">เมืองย่า</span>"
+    </h1>
+</section>
+
+<section class="places-container container">
+    <h2 class="section-title">กิจกรรมและเทศกาลสำคัญ</h2>
+
+    <!-- Loop แสดงรายการกิจกรรมจากฐานข้อมูล -->
+    {% for activity in activities %}
+    <!-- ลิงก์ไปยังหน้าละเอียด activities_detail โดยส่ง id ไปด้วย -->
+    <a href="{{ url_for('activity_detail', activity_id=activity.id) }}" style="text-decoration: none; color: inherit;">
+        <div class="activity-item">
+            <div class="activity-image">
+                <img src="{{ activity.image }}" alt="{{ activity.title }}">
+            </div>
+            <div class="activity-content">
+                <div class="activity-item-header">
+                    <h1>{{ activity.title }}</h1>
+                    <p>{{ activity.date }}</p>
+                </div>
+                <p>{{ activity.description }}</p>
+                <li><strong>พิกัด:</strong> <span class="underline">{{ activity.location }}</span></li>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+
+    <!-- Festival 1: Thao Suranari Festival -->
+    <!-- <div class="place-item">
+        <div class="place-info">
+            <h3 class="place-title">งานฉลองวันแห่งชัยชนะของท้าวสุรนารี (งานย่าโม)</h3>
+            <p class="place-desc">
+                งานประจำปีที่ยิ่งใหญ่ที่สุดของชาวโคราช จัดขึ้นเพื่อรำลึกถึงวีรกรรมของท้าวสุรนารี
+                ภายในงานมีขบวนแห่ที่สวยงาม การแสดงแสงสีเสียง การออกร้านกาชาด และการจำหน่ายสินค้า OTOP
+                ทั่วประเทศ
+            </p>
+            <ul class="place-details">
+                <li><strong>ช่วงเวลาจัดงาน:</strong> 23 มีนาคม - 3 เมษายน ของทุกปี</li>
+                <li><strong>สถานที่:</strong> ลานอนุสาวรีย์ท้าวสุรนารี และสนามหน้าศาลากลาง</li>
+            </ul>
+        </div>
+        <div class="place-gallery">
+            <img src="https://placehold.co/600x400/dddddd/333333?text=Yamo+Festival" alt="งานย่าโม">
+        </div>
+    </div> -->
+
+    <!-- Festival 2: Korat Candle Festival -->
+    <!-- <div class="place-item">
+        <div class="place-info">
+            <h3 class="place-title">งานแห่เทียนพรรษาโคราช</h3>
+            <p class="place-desc">
+                ชมความวิจิตรตระการตาของขบวนเทียนพรรษาจากคุ้มวัดต่างๆ ที่แกะสลักอย่างสวยงาม
+                สะท้อนเรื่องราวทางพุทธศาสนา เป็นหนึ่งในงานแห่เทียนที่ยิ่งใหญ่ที่สุดในประเทศไทย
+                รองจากอุบลราชธานี
+            </p>
+            <ul class="place-details">
+                <li><strong>ช่วงเวลาจัดงาน:</strong> วันอาสาฬหบูชาและวันเข้าพรรษา</li>
+                <li><strong>สถานที่:</strong> ลานอนุสาวรีย์ท้าวสุรนารี</li>
+            </ul>
+        </div>
+        <div class="place-gallery">
+            <img src="https://placehold.co/600x400/dddddd/333333?text=Candle+Festival" alt="งานแห่เทียนพรรษา">
+        </div>
+    </div> -->
+
+    <!-- Festival 3: Pak Chong Cowboy City -->
+    <!-- <div class="place-item">
+        <div class="place-info">
+            <h3 class="place-title">งานปากช่องคาวบอยซิตี้</h3>
+            <p class="place-desc">
+                สัมผัสบรรยากาศเมืองคาวบอยตะวันตก การแสดงคาวบอยโชว์ ดนตรีคันทรี
+                และการประกวดคาวบอย-คาวเกิร์ล สะท้อนเอกลักษณ์ของอำเภอปากช่องที่มีฟาร์มม้าและโคนมมากมาย
+            </p>
+            <ul class="place-details">
+                <li><strong>ช่วงเวลาจัดงาน:</strong> เดือนธันวาคมของทุกปี</li>
+                <li><strong>สถานที่:</strong> อำเภอปากช่อง</li>
+            </ul>
+        </div>
+        <div class="place-gallery">
+            <img src="https://placehold.co/600x400/dddddd/333333?text=Cowboy+Festival" alt="งานปากช่องคาวบอย">
+        </div>
+    </div> -->
+
+    <!-- Festival 4: Jim Thompson Farm Tour -->
+    <!-- <div class="place-item">
+        <div class="place-info">
+            <h3 class="place-title">จิม ทอมป์สัน ฟาร์ม ทัวร์</h3>
+            <p class="place-desc">
+                แหล่งท่องเที่ยวเชิงเกษตรวัฒนธรรมที่เปิดให้เข้าชมปีละครั้งในช่วงฤดูหนาว
+                ชมทุ่งดอกไม้กว้างใหญ่ หมู่บ้านอีสาน และเรียนรู้กระบวนการผลิตผ้าไหม
+                เป็นจุดเช็คอินยอดฮิตที่ไม่ควรพลาด
+            </p>
+            <ul class="place-details">
+                <li><strong>ช่วงเวลาจัดงาน:</strong> เดือนธันวาคม - มกราคม</li>
+                <li><strong>สถานที่:</strong> อ.ปักธงชัย</li>
+            </ul>
+        </div>
+        <div class="place-gallery">
+            <img src="https://placehold.co/600x400/dddddd/333333?text=Jim+Thompson+Farm" alt="จิม ทอมป์สัน ฟาร์ม">
+        </div>
+    </div> -->
+
+    <!-- Festival 5: Flora Park Wang Nam Khiao -->
+    <!-- <div class="place-item">
+        <div class="place-info">
+            <h3 class="place-title">งานเบญจมาศบานในม่านหมอก</h3>
+            <p class="place-desc">
+                ชมความงามของดอกเบญจมาศหลากสีสันบานสะพรั่งท้าลมหนาว และดอกไม้เมืองหนาวนานาชนิด
+                ท่ามกลางบรรยากาศเย็นสบายของวังน้ำเขียว สวิสเซอร์แลนด์แดนอีสาน
+            </p>
+            <ul class="place-details">
+                <li><strong>ช่วงเวลาจัดงาน:</strong> เดือนมกราคม - กุมภาพันธ์</li>
+                <li><strong>สถานที่:</strong> หน้าที่ว่าการอำเภอวังน้ำเขียว</li>
+            </ul>
+        </div>
+        <div class="place-gallery">
+            <img src="https://placehold.co/600x400/dddddd/333333?text=Flora+Festival" alt="งานเบญจมาศบาน">
+        </div>
+    </div> -->
+
+</section>
+{% endblock %}

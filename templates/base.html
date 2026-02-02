@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yacity Result - นครราชสีมา</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Bai+Jamjuree:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Main CSS -->
+    <!-- โหลดไฟล์ CSS จากโฟลเดอร์ static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="site-header">
+        <div class="logo-container">
+            <!-- Placeholder for Logo "รู้จักเมืองย่า" -->
+            <!-- <div class="logo-text">รู้จักเมืองย่า</div> -->
+            <div class="navbar-brand">
+                <img src="{{ url_for('static', filename='images/Purple Minimalist Creative Studio Logo-Photoroom - แก้ไขแล้ว.png') }}"
+                    width="100px" alt="">
+                <h1>Hi everything korat</h1>
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            <ul>
+                <li><a href="{{ url_for('hello_world') }}"
+                        class="{% if request.endpoint == 'hello_world' %}active{% endif %}">หน้าแรก</a></li>
+                <li><a href="{{ url_for('places') }}"
+                        class="{% if request.endpoint == 'places' %}active{% endif %}">สถานที่น่าไป</a></li>
+                <li><a href="{{ url_for('shopping') }}"
+                        class="{% if request.endpoint == 'shopping' %}active{% endif %}">ห้างดัง/ตลาด</a></li>
+                <li><a href="{{ url_for('restaurants') }}"
+                        class="{% if request.endpoint == 'restaurants' %}active{% endif %}">ร้านน่าชิม</a></li>
+                <li><a href="{{ url_for('accommodation') }}"
+                        class="{% if request.endpoint == 'accommodation' %}active{% endif %}">ที่พัก</a></li>
+                <li><a href="{{ url_for('activities') }}"
+                        class="{% if request.endpoint == 'activities' %}active{% endif %}">กิจกรรม/เทศกาล</a></li>
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <!-- ตรวจสอบว่าผู้ใช้เข้าสู่ระบบหรือยัง -->
+            {% if current_user.is_authenticated %}
+            <!-- ถ้าเข้าสู่ระบบแล้ว ให้แสดงชื่อและปุ่มออกจากระบบ -->
+            <span style="margin-right: 10px;">ยินดีต้อนรับ, {{ current_user.username }}</span>
+            <a href="{{ url_for('logout') }}" class="login-btn">ออกจากระบบ</a>
+            {% else %}
+            <!-- ถ้ายังไม่เข้าสู่ระบบ ให้แสดงปุ่มเข้าสู่ระบบและสมัครสมาชิก -->
+            <a href="{{ url_for('login') }}" class="login-btn"><i class="icon-user"></i> เข้าสู่ระบบ</a>
+            <a href="{{ url_for('register') }}" class="login-btn">สมัครสมาชิก</a>
+            {% endif %}
+
+        </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <!-- Main Content: ส่วนนี้จะถูกแทนที่ด้วยเนื้อหาของแต่ละหน้า -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Yacity Clone. All rights reserved.</p>
+            <a href="#">ติดต่อ</a>
+        </div>
+    </footer>
+
+</body>
+
+</html>
