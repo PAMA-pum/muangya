@@ -52,6 +52,13 @@
             {% if current_user.is_authenticated %}
             <!-- ถ้าเข้าสู่ระบบแล้ว ให้แสดงชื่อและปุ่มออกจากระบบ -->
             <span style="margin-right: 10px;">ยินดีต้อนรับ, {{ current_user.username }}</span>
+
+            <!-- ปุ่ม Admin Dashboard สำหรับผู้ดูแลระบบ -->
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="login-btn"
+                style="background-color: #28a745; margin-right: 5px;">Admin Dashboard</a>
+            {% endif %}
+
             <a href="{{ url_for('logout') }}" class="login-btn">ออกจากระบบ</a>
             {% else %}
             <!-- ถ้ายังไม่เข้าสู่ระบบ ให้แสดงปุ่มเข้าสู่ระบบและสมัครสมาชิก -->

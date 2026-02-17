@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="activity-form-section" style="padding: 50px 0;">
+    <div class="container" style="max-width: 600px; margin: 0 auto;">
+        <h2 style="text-align: center; margin-bottom: 30px;">{{ form_title }}</h2>
+
+        <div class="form-card"
+            style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <form method="POST">
+                <div style="margin-bottom: 20px;">
+                    <label for="title"
+                        style="display: block; margin-bottom: 5px; font-weight: bold;">ชื่อกิจกรรม</label>
+                    <input type="text" id="title" name="title" value="{{ activity.title if activity else '' }}" required
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="date" style="display: block; margin-bottom: 5px; font-weight: bold;">วันที่</label>
+                    <input type="text" id="date" name="date" value="{{ activity.date if activity else '' }}" required
+                        placeholder="Ex: 12-15 เมษายน 2567"
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="description"
+                        style="display: block; margin-bottom: 5px; font-weight: bold;">รายละเอียด</label>
+                    <textarea id="description" name="description" rows="5" required
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">{{ activity.description if activity else '' }}</textarea>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="location" style="display: block; margin-bottom: 5px; font-weight: bold;">สถานที่</label>
+                    <input type="text" id="location" name="location" value="{{ activity.location if activity else '' }}"
+                        required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="map_link" style="display: block; margin-bottom: 5px; font-weight: bold;">Google Maps
+                        Link</label>
+                    <input type="text" id="map_link" name="map_link" value="{{ activity.map_link if activity else '' }}"
+                        required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="image" style="display: block; margin-bottom: 5px; font-weight: bold;">ลิงก์รูปภาพ
+                        (URL)</label>
+                    <input type="text" id="image" name="image" value="{{ activity.image if activity else '' }}" required
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div style="text-align: center;">
+                    <button type="submit" class="btn-submit"
+                        style="background-color: #6C5CE7; color: white; padding: 10px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">บันทึกข้อมูล</button>
+                    <a href="{{ url_for('admin_dashboard') }}"
+                        style="margin-left: 10px; color: #666; text-decoration: none;">ยกเลิก</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

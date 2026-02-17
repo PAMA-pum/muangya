@@ -29,6 +29,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True) # รหัสผู้ใช้ (Primary Key)
     username = db.Column(db.String(150), unique=True, nullable=False) # ชื่อผู้ใช้ (ต้องไม่ซ้ำ)
     password = db.Column(db.String(150), nullable=False) # รหัสผ่าน (เก็บแบบ Hashed)
+    is_admin = db.Column(db.Boolean, default=False) # สถานะผู้ดูแลระบบ
 
 # Model สำหรับกิจกรรม (Activity)
 class Activity(db.Model):
@@ -53,6 +54,25 @@ class Comment(db.Model):
 
     # ความสัมพันธ์กับ User (Many-to-One): หลายความคิดเห็นมาจากผู้ใช้คนเดียว
     user = db.relationship('User', backref=db.backref('comments', lazy=True))
+
+# --------------------------------------------------------------------------------
+# Admin Setup
+# --------------------------------------------------------------------------------
+def create_admin_user():
+    # ตรวจสอบว่ามี user หรือไม่ ถ้าไม่มีเลย หรือยังไม่มี admin ให้สร้างไว้สักคน
+    # ในที่นี้จะสร้าง admin / adminpassword ถ้ายังไม่มี user ชื่อ 'admin'
+    admin_user = User.query.filter_by(username='pum').first()
+    if not admin_user:
+        hashed_password = generate_password_hash('Patthama', method='scrypt')
+        new_admin = User(username='pum', password=hashed_password, is_admin=True)
+        db.session.add(new_admin)
+        db.session.commit()
+        print("Admin user created: username='pum', password='Patthama'")
+    else:
+        # ถ้ามี admin user แล้วแต่มิได้เป็น admin (เผื่อกรณีเก่า) ก็ปรับให้เป็น admin
+        if not admin_user.is_admin:
+            admin_user.is_admin = True
+            db.session.commit()
 
 # ฟังก์ชันสำหรับโหลดข้อมูลผู้ใช้จาก Session
 @login_manager.user_loader
@@ -81,6 +101,7 @@ def seed_activities():
 # สร้างตารางฐานข้อมูลทั้งหมดเมื่อเริ่มแอป
 with app.app_context():
     db.create_all()
+    create_admin_user() # สร้าง admin user
     seed_activities()
 
 # --------------------------------------------------------------------------------
@@ -143,6 +164,118 @@ def activity_detail(activity_id):
     comments = Comment.query.filter_by(activity_id=activity.id).order_by(Comment.date_posted.desc()).all()
     return render_template('activity_detail.html', activity=activity, comments=comments)
 
+    # ดึงความคิดเห็นทั้งหมดของกิจกรรมนี้ เรียงจากใหม่ไปเก่า
+    comments = Comment.query.filter_by(activity_id=activity.id).order_by(Comment.date_posted.desc()).all()
+    return render_template('activity_detail.html', activity=activity, comments=comments)
+
+# --------------------------------------------------------------------------------
+# Admin Routes
+# --------------------------------------------------------------------------------
+
+from functools import wraps
+from flask import abort
+
+# Decorator สำหรับตรวจสอบว่าเป็น Admin หรือไม่
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/admin/dashboard")
+@login_required
+@admin_required
+def admin_dashboard():
+    users = User.query.all()
+    activities = Activity.query.all()
+    comments = Comment.query.all()
+    return render_template('admin_dashboard.html', users=users, activities=activities, comments=comments)
+
+@app.route("/admin/user/delete/<int:user_id>")
+@login_required
+@admin_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_admin: # ป้องกันการลบ Admin ด้วยกันเอง (หรือลบตัวเอง)
+        flash('ไม่สามารถลบผู้ดูแลระบบได้', 'danger')
+    else:
+        # ลบความคิดเห็นของผู้ใช้นี้ก่อน เพื่อป้องกัน error (FK Constraint)
+        # จริงๆ set cascade delete ได้ แต่ทำแบบ manual เพื่อความชัดเจน
+        Comment.query.filter_by(user_id=user.id).delete()
+        db.session.delete(user)
+        db.session.commit()
+        flash('ลบผู้ใช้เรียบร้อยแล้ว', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/activity/add", methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_activity():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        date = request.form.get('date')
+        description = request.form.get('description')
+        location = request.form.get('location')
+        map_link = request.form.get('map_link')
+        image = request.form.get('image')
+
+        new_activity = Activity(
+            title=title, 
+            date=date, 
+            description=description, 
+            location=location, 
+            map_link=map_link, 
+            image=image
+        )
+        db.session.add(new_activity)
+        db.session.commit()
+        flash('เพิ่มกิจกรรมใหม่เรียบร้อยแล้ว', 'success')
+        return redirect(url_for('admin_dashboard'))
+    return render_template('activity_form.html', form_title="เพิ่มกิจกรรมใหม่")
+
+@app.route("/admin/activity/edit/<int:activity_id>", methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_activity(activity_id):
+    activity = Activity.query.get_or_404(activity_id)
+    if request.method == 'POST':
+        activity.title = request.form.get('title')
+        activity.date = request.form.get('date')
+        activity.description = request.form.get('description')
+        activity.location = request.form.get('location')
+        activity.map_link = request.form.get('map_link')
+        activity.image = request.form.get('image')
+        
+        db.session.commit()
+        flash('แก้ไขกิจกรรมเรียบร้อยแล้ว', 'success')
+        return redirect(url_for('admin_dashboard'))
+    return render_template('activity_form.html', activity=activity, form_title="แก้ไขกิจกรรม")
+
+@app.route("/admin/activity/delete/<int:activity_id>")
+@login_required
+@admin_required
+def delete_activity(activity_id):
+    activity = Activity.query.get_or_404(activity_id)
+    # ลบความคิดเห็นที่เกี่ยวข้องก่อน
+    Comment.query.filter_by(activity_id=activity.id).delete()
+    db.session.delete(activity)
+    db.session.commit()
+    flash('ลบกิจกรรมเรียบร้อยแล้ว', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/comment/delete/<int:comment_id>")
+@login_required
+@admin_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    flash('ลบความคิดเห็นเรียบร้อยแล้ว', 'success')
+    return redirect(url_for('admin_dashboard'))
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -155,6 +288,9 @@ def login():
         # ตรวจสอบรหัสผ่าน
         if user and check_password_hash(user.password, password):
             login_user(user) # เข้าสู่ระบบสำเร็จ
+            # ถ้าเป็น Admin ให้ไปหน้า Dashboard
+            if user.is_admin:
+                return redirect(url_for('admin_dashboard'))
             return redirect(url_for('hello_world'))
         else:
             flash('Login Failed. Please check username and password', 'danger') # แจ้งเตือนเมื่อผิดพลาด
