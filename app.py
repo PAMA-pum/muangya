@@ -1,24 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+# นำเข้าไลบรารีที่จำเป็น
+from flask import Flask, render_template, request, redirect, url_for, flash  # ฟังก์ชันพื้นฐานของ Flask
+from flask_sqlalchemy import SQLAlchemy  # ORM สำหรับจัดการฐานข้อมูล (SQLAlchemy)
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user  # จัดการการล็อกอิน
+from werkzeug.security import generate_password_hash, check_password_hash  # ฟังก์ชันเข้ารหัสรหัสผ่าน
+from datetime import datetime  # ใช้เก็บ/จัดการวันที่-เวลา
 
 # เริ่มต้นสร้างแอปพลิเคชัน Flask
-app = Flask(__name__)
+app = Flask(__name__)  # สร้างแอป Flask
 
-# ตั้งค่า Secret Key สำหรับความปลอดภัยของ Session (ควรเปลี่ยนเป็นคีย์ที่ซับซ้อนและเป็นความลับ)
-app.config['SECRET_KEY'] = 'your-secret-key-here' 
-
-# ตั้งค่าการเชื่อมต่อฐานข้อมูล SQLite ชื่อ 'database.db'
+# กำหนดคอนฟิกพื้นฐาน
+# `SECRET_KEY` ใช้สำหรับ session/flash และควรเก็บเป็นความลับ (ไม่ควรเป็นค่าเริ่มต้นแบบนี้ใน production)
+app.config['SECRET_KEY'] = 'your-secret-key-here'
+# กำหนดฐานข้อมูลเป็นไฟล์ SQLite ชื่อ database.db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # ปิดการติดตามการเปลี่ยนแปลงเพื่อประหยัดทรัพยากร
 
-# เริ่มต้นใช้งาน SQLAlchemy และ LoginManager
-db = SQLAlchemy(app)
-login_manager = LoginManager()
+# สร้าง instance ของ SQLAlchemy และ LoginManager
+db = SQLAlchemy(app)  # ใช้สร้าง model และจัดการ session กับฐานข้อมูล
+login_manager = LoginManager()  # จัดการการล็อกอินและ session ของผู้ใช้
 login_manager.init_app(app)
-login_manager.login_view = 'login' # กำหนดหน้า Login เริ่มต้นหากผู้ใช้ยังไม่ได้เข้าสู่ระบบ
+login_manager.login_view = 'login'  # กำหนดเส้นทางหน้า login เมื่อยังไม่ได้ล็อกอิน
 
 # --------------------------------------------------------------------------------
 # Models (โครงสร้างฐานข้อมูล)
@@ -26,50 +27,53 @@ login_manager.login_view = 'login' # กำหนดหน้า Login เริ
 
 # Model สำหรับผู้ใช้งาน (User)
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True) # รหัสผู้ใช้ (Primary Key)
-    username = db.Column(db.String(150), unique=True, nullable=False) # ชื่อผู้ใช้ (ต้องไม่ซ้ำ)
-    password = db.Column(db.String(150), nullable=False) # รหัสผ่าน (เก็บแบบ Hashed)
-    is_admin = db.Column(db.Boolean, default=False) # สถานะผู้ดูแลระบบ
+    # Model สำหรับเก็บข้อมูลผู้ใช้
+    id = db.Column(db.Integer, primary_key=True)  # รหัสผู้ใช้ (Primary Key)
+    username = db.Column(db.String(150), unique=True, nullable=False)  # ชื่อผู้ใช้ ต้องไม่ซ้ำ
+    password = db.Column(db.String(150), nullable=False)  # รหัสผ่าน เก็บแบบ hashed
+    is_admin = db.Column(db.Boolean, default=False)  # ถ้าเป็น True แปลว่าเป็นแอดมิน (สิทธิ์พิเศษ)
 
 # Model สำหรับกิจกรรม (Activity)
 class Activity(db.Model):
-    id = db.Column(db.Integer, primary_key=True) # รหัสกิจกรรม
-    title = db.Column(db.String(200), nullable=False) # ชื่อกิจกรรม
-    date = db.Column(db.String(100), nullable=False) # วันที่จัดกิจกรรม
-    description = db.Column(db.Text, nullable=False) # รายละเอียดกิจกรรม
-    location = db.Column(db.String(300), nullable=False) # สถานที่จัด
-    map_link = db.Column(db.String(500), nullable=False) # ลิงก์แผนที่ (Google Maps)
-    image = db.Column(db.String(500), nullable=False) # ลิงก์รูปภาพ
+    # Model สำหรับเก็บข้อมูลกิจกรรม/อีเวนต์
+    id = db.Column(db.Integer, primary_key=True)  # รหัสกิจกรรม
+    title = db.Column(db.String(200), nullable=False)  # หัวข้อ/ชื่อกิจกรรม
+    date = db.Column(db.String(100), nullable=False)  # วันที่ (เก็บเป็นสตริงตามต้นฉบับ)
+    description = db.Column(db.Text, nullable=False)  # รายละเอียด
+    location = db.Column(db.String(300), nullable=False)  # สถานที่จัด
+    map_link = db.Column(db.String(500), nullable=False)  # ลิงก์แผนที่ (เช่น Google Maps)
+    image = db.Column(db.String(500), nullable=False)  # เส้นทางหรือ URL รูปภาพ
 
-    # ความสัมพันธ์กับ Comment (One-to-Many): หนึ่งกิจกรรมมีหลายความคิดเห็น
+    # ความสัมพันธ์ One-to-Many กับ Comment: Activity มีหลาย Comment
     comments = db.relationship('Comment', backref='activity', lazy=True)
 
 # Model สำหรับความคิดเห็น (Comment)
 class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True) # รหัสความคิดเห็น
-    content = db.Column(db.Text, nullable=False) # เนื้อหาความคิดเห็น
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # วันที่และเวลาที่โพสต์
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # รหัสผู้ใช้ที่โพสต์ (Foreign Key)
-    activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'), nullable=False) # รหัสกิจกรรมที่เกี่ยวข้อง (Foreign Key)
+    # Model สำหรับเก็บความคิดเห็นของผู้ใช้ต่อกิจกรรม
+    id = db.Column(db.Integer, primary_key=True)  # รหัสความคิดเห็น
+    content = db.Column(db.Text, nullable=False)  # ข้อความความคิดเห็น
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # เวลาที่โพสต์
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # FK ไปยังตาราง user
+    activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'), nullable=False)  # FK ไปยัง activity
 
-    # ความสัมพันธ์กับ User (Many-to-One): หลายความคิดเห็นมาจากผู้ใช้คนเดียว
+    # ความสัมพันธ์ Many-to-One กับ User: comment แต่ละอันมีผู้ใช้เป็นเจ้าของ
     user = db.relationship('User', backref=db.backref('comments', lazy=True))
 
 # --------------------------------------------------------------------------------
 # Admin Setup
 # --------------------------------------------------------------------------------
 def create_admin_user():
-    # ตรวจสอบว่ามี user หรือไม่ ถ้าไม่มีเลย หรือยังไม่มี admin ให้สร้างไว้สักคน
-    # ในที่นี้จะสร้าง admin / adminpassword ถ้ายังไม่มี user ชื่อ 'admin'
+    # ฟังก์ชันตรวจสอบและสร้างผู้ใช้แอดมินเริ่มต้น
+    # ถ้าไม่มีผู้ใช้ชื่อ 'pum' จะสร้างขึ้นพร้อมรหัสผ่าน 'Patthama' (hashed)
     admin_user = User.query.filter_by(username='pum').first()
     if not admin_user:
-        hashed_password = generate_password_hash('Patthama', method='pbkdf2:sha256')
+        hashed_password = generate_password_hash('Patthama', method='pbkdf2:sha256')  # เข้ารหัสรหัสผ่าน
         new_admin = User(username='pum', password=hashed_password, is_admin=True)
         db.session.add(new_admin)
         db.session.commit()
         print("Admin user created: username='pum', password='Patthama'")
     else:
-        # ถ้ามี admin user แล้วแต่มิได้เป็น admin (เผื่อกรณีเก่า) ก็ปรับให้เป็น admin
+        # ถ้าพบผู้ใช้ แต่ยังไม่ถูกตั้งเป็น admin ให้ตั้งค่านี้เพื่อให้มีสิทธิ์
         if not admin_user.is_admin:
             admin_user.is_admin = True
             db.session.commit()
@@ -77,6 +81,7 @@ def create_admin_user():
 # ฟังก์ชันสำหรับโหลดข้อมูลผู้ใช้จาก Session
 @login_manager.user_loader
 def load_user(user_id):
+    # ใช้สำหรับโหลดข้อมูลผู้ใช้จาก session (Flask-Login จะเรียกฟังก์ชันนี้)
     return User.query.get(int(user_id))
 
 # --------------------------------------------------------------------------------
@@ -87,22 +92,17 @@ def load_user(user_id):
 # activities_data_seed = [...] (code hidden for brevity as it was commented out in user's version)
 
 def seed_activities():
-    # ตรวจสอบว่ามีข้อมูลในตาราง Activity หรือไม่
+    # ฟังก์ชันสำหรับเพิ่มข้อมูลกิจกรรมตัวอย่าง (seed)
+    # ปัจจุบันยังไม่ได้เปิดใช้งาน เพราะ activities_data_seed ถูกคอมเมนต์ไว้
     if Activity.query.first() is None:
-        # หากไม่มี ให้เพิ่มข้อมูลจาก activities_data_seed (จำเป็นต้องมีตัวแปรนี้ถ้าจะใช้)
-        # หมายเหตุ: โค้ดส่วนนี้จะทำงานถ้ามีการ Uncomment ตัวแปร activities_data_seed ด้านบน
-        pass 
-        # for item in activities_data_seed:
-        #     activity = Activity(...)
-        #     db.session.add(activity)
-        # db.session.commit()
-        # print("Activities seeded!")
+        pass
 
 # สร้างตารางฐานข้อมูลทั้งหมดเมื่อเริ่มแอป
 with app.app_context():
-    db.create_all()
-    create_admin_user() # สร้าง admin user
-    seed_activities()
+    # เมื่อรันแอป จะสร้างตารางฐานข้อมูล (ถ้ายังไม่มี) และเรียกฟังก์ชันเตรียมข้อมูล
+    db.create_all()  # สร้างตารางตาม Model ที่นิยาม
+    create_admin_user()  # สร้าง admin user หากยังไม่มี
+    seed_activities()  # (ไม่ทำอะไรในสถานะปัจจุบัน) เพิ่มข้อมูลกิจกรรมตัวอย่าง
 
 # --------------------------------------------------------------------------------
 # Routes (เส้นทาง URL)
@@ -110,7 +110,8 @@ with app.app_context():
 
 @app.route("/")
 def hello_world():
-    return render_template('index.html') # แสดงหน้าแรก
+    # เส้นทางหน้าแรกของเว็บ แสดง template index.html
+    return render_template('index.html')
 
 @app.route("/places")
 def places():
@@ -145,15 +146,14 @@ def activity_detail(activity_id):
 
     # จัดการกรณีมีการส่งแบบฟอร์ม (POST request) คือการคอมเมนต์
     if request.method == 'POST':
-        # ตรวจสอบว่าผู้ใช้ล็อกอินหรือยัง
+        # ถ้าผู้ใช้ยังไม่ได้ล็อกอิน ห้ามโพสต์ความคิดเห็น
         if not current_user.is_authenticated:
             flash('คุณต้องเข้าสู่ระบบก่อนแสดงความคิดเห็น', 'danger')
             return redirect(url_for('login'))
-        
-        # รับข้อมูลจากฟอร์ม
+
+        # รับข้อความจากฟอร์มและบันทึกเป็น Comment ใหม่
         content = request.form.get('content')
         if content:
-            # สร้าง Comment ใหม่และบันทึกลงฐานข้อมูล
             comment = Comment(content=content, user_id=current_user.id, activity_id=activity.id)
             db.session.add(comment)
             db.session.commit()
@@ -172,13 +172,14 @@ def activity_detail(activity_id):
 # Admin Routes
 # --------------------------------------------------------------------------------
 
-from functools import wraps
+from functools import wraps  # ใช้สร้าง decorator
 from flask import abort
 
 # Decorator สำหรับตรวจสอบว่าเป็น Admin หรือไม่
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # ตรวจสอบสิทธิ์: ต้องล็อกอินและต้องเป็น admin เท่านั้น
         if not current_user.is_authenticated or not current_user.is_admin:
             flash('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'danger')
             return redirect(url_for('login'))
@@ -189,6 +190,7 @@ def admin_required(f):
 @login_required
 @admin_required
 def admin_dashboard():
+    # สำหรับหน้าแดชบอร์ดของแอดมิน ดึงข้อมูลทั้งหมดเพื่อบริหารจัดการ
     users = User.query.all()
     activities = Activity.query.all()
     comments = Comment.query.all()
@@ -222,12 +224,13 @@ def add_activity():
         map_link = request.form.get('map_link')
         image = request.form.get('image')
 
+        # สร้าง Activity ใหม่จากข้อมูลฟอร์ม
         new_activity = Activity(
-            title=title, 
-            date=date, 
-            description=description, 
-            location=location, 
-            map_link=map_link, 
+            title=title,
+            date=date,
+            description=description,
+            location=location,
+            map_link=map_link,
             image=image
         )
         db.session.add(new_activity)
@@ -242,13 +245,14 @@ def add_activity():
 def edit_activity(activity_id):
     activity = Activity.query.get_or_404(activity_id)
     if request.method == 'POST':
+        # อัพเดตฟิลด์ของ Activity จากฟอร์มแล้วบันทึก
         activity.title = request.form.get('title')
         activity.date = request.form.get('date')
         activity.description = request.form.get('description')
         activity.location = request.form.get('location')
         activity.map_link = request.form.get('map_link')
         activity.image = request.form.get('image')
-        
+
         db.session.commit()
         flash('แก้ไขกิจกรรมเรียบร้อยแล้ว', 'success')
         return redirect(url_for('admin_dashboard'))
@@ -287,13 +291,14 @@ def login():
         
         # ตรวจสอบรหัสผ่าน
         if user and check_password_hash(user.password, password):
-            login_user(user) # เข้าสู่ระบบสำเร็จ
-            # ถ้าเป็น Admin ให้ไปหน้า Dashboard
+            login_user(user)  # บันทึกสถานะผู้ใช้ว่าเข้าสู่ระบบแล้ว (Flask-Login)
+            # ถ้าเป็นแอดมิน ให้ไปแดชบอร์ดแอดมิน
             if user.is_admin:
                 return redirect(url_for('admin_dashboard'))
+            # หากเป็นผู้ใช้ปกติ ให้กลับหน้าหลัก
             return redirect(url_for('hello_world'))
         else:
-            flash('Login Failed. Please check username and password', 'danger') # แจ้งเตือนเมื่อผิดพลาด
+            flash('Login Failed. Please check username and password', 'danger')  # แจ้งเตือนเมื่อ username/รหัสผ่านไม่ถูกต้อง
             
     return render_template('login.html')
 
@@ -324,8 +329,10 @@ def register():
 @app.route("/logout")
 @login_required # ต้องล็อกอินก่อนถึงจะกด Logout ได้
 def logout():
-    logout_user() # ออกจากระบบ
+    # ออกจากระบบโดยลบ session ของผู้ใช้
+    logout_user()
     return redirect(url_for('login'))
 
 if __name__ == "__main__":
-    app.run(debug=True) # รันแอปในโหมด Debug
+    # รันเซิร์ฟเวอร์ Flask ในโหมด Debug (สำหรับการพัฒนา)
+    app.run(debug=True)
