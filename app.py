@@ -63,7 +63,7 @@ def create_admin_user():
     # ในที่นี้จะสร้าง admin / adminpassword ถ้ายังไม่มี user ชื่อ 'admin'
     admin_user = User.query.filter_by(username='pum').first()
     if not admin_user:
-        hashed_password = generate_password_hash('Patthama', method='scrypt')
+        hashed_password = generate_password_hash('Patthama', method='pbkdf2:sha256')
         new_admin = User(username='pum', password=hashed_password, is_admin=True)
         db.session.add(new_admin)
         db.session.commit()
@@ -309,7 +309,7 @@ def register():
             flash('Username already exists.', 'danger')
         else:
             # สร้างรหัสผ่านแบบ Hashed เพื่อความปลอดภัย
-            hashed_password = generate_password_hash(password, method='scrypt')
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             new_user = User(username=username, password=hashed_password)
             
             # บันทึกผู้ใช้ใหม่ลงฐานข้อมูล
